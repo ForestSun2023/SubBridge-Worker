@@ -1,5 +1,9 @@
 # SubBridge-Worker
 A lightweight Cloudflare Worker for secure subscription relay with IP restriction and multi-source support.
+
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Worker](https://img.shields.io/badge/Cloudflare-Worker-orange)
+
 # 🚀 SubBridge Worker
 
 一个基于 Cloudflare Workers 的订阅中转工具，支持：
