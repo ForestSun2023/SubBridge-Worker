@@ -35,7 +35,7 @@ A lightweight Cloudflare Worker for secure subscription relay with IP restrictio
 ```bash
 echo -n "你的公网IP" | sha256sum
 
-填入：
+### 填入：
 
 const ALLOWED_IP_HASHES = ["生成的hash"]
 
