@@ -1,9 +1,5 @@
+MIT License
 
----
+Copyright (c) 2026
 
-# 📄 四、.gitignore
-
-```gitignore
-node_modules/
-.env
-*.log
+Permission is hereby granted...
