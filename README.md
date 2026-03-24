@@ -37,7 +37,7 @@ echo -n "你的公网IP" | sha256sum
 
 填入：
 
-const ALLOWED_IP_HASHES = ["生成的hash"];
+const ALLOWED_IP_HASHES = ["生成的hash"]
 
 ### 3️⃣ 添加订阅
 const subscriptions = {
