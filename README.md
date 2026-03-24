@@ -62,3 +62,16 @@ https://your-worker.workers.dev/?id=2
 Sub-Store 订阅中转
 绕过 Cloudflare JS Challenge
 多机场统一管理
+
+📄 License
+
+MIT
+
+---
+
+# 📄 四、.gitignore
+
+```gitignore
+node_modules/
+.env
+*.log
