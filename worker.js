@@ -1,19 +1,10 @@
 export default {
-  async fetch(request) {
-    // ========= 配置区 =========
+  async fetch(request, env) {
+    // ======== IP 白名单 ========
+    const allowedHashes = env.ALLOWED_IPS
+      ? env.ALLOWED_IPS.split(",")
+      : [];
 
-    // IP Hash（用 SHA-256 生成）
-    const ALLOWED_IP_HASHES = [
-      "your_ip_hash_here"
-    ];
-
-    // 多订阅（无限扩展）
-    const subscriptions = {
-      "1": "https://example.com/sub1",
-      "2": "https://example.com/sub2"
-    };
-
-    // ========= IP 校验 =========
     const ip = request.headers.get("cf-connecting-ip");
     if (!ip) {
       return new Response("Forbidden", { status: 403 });
@@ -29,21 +20,25 @@ export default {
       b.toString(16).padStart(2, "0")
     ).join("");
 
-    if (!ALLOWED_IP_HASHES.includes(ipHash)) {
+    if (!allowedHashes.includes(ipHash)) {
       return new Response("Forbidden", { status: 403 });
     }
 
-    // ========= 订阅选择 =========
+    // ======== 订阅选择 ========
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
 
-    if (!id || !subscriptions[id]) {
+    if (!id) {
+      return new Response("Missing id", { status: 400 });
+    }
+
+    const target = env["SUB" + id];
+
+    if (!target) {
       return new Response("Subscription not found", { status: 404 });
     }
 
-    const target = subscriptions[id];
-
-    // ========= 转发 =========
+    // ======== 转发 ========
     const resp = await fetch(target, {
       headers: {
         "User-Agent":
