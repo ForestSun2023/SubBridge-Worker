@@ -1,0 +1,9 @@
+
+---
+
+# 📄 四、.gitignore
+
+```gitignore
+node_modules/
+.env
+*.log
