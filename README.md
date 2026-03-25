@@ -2,6 +2,9 @@
 
 一个基于 Cloudflare Workers 的轻量级订阅中转工具，提供安全、可控的代理订阅分发能力。
 
+![Cloudflare](https://img.shields.io/badge/Cloudflare-Worker-orange)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 ---
 
 ## ✨ 项目简介
