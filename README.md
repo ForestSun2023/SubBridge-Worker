@@ -1,9 +1,11 @@
 # 🚀 SubBridge Worker
 
-一个基于 Cloudflare Workers 的轻量级订阅中转工具，提供安全、可控的代理订阅分发能力。
-
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Worker-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+![Status](https://img.shields.io/badge/status-active-success)
+![Version](https://img.shields.io/badge/version-1.0-informational)
+
+一个基于 Cloudflare Workers 的轻量级订阅中转工具，提供安全、可控的代理订阅分发能力。
 
 ---
 
@@ -27,15 +29,15 @@ SubBridge Worker 通过 Cloudflare 边缘网络，将真实订阅进行安全中
 
 ## 🔥 核心特性
 
-| 功能      | 说明              |
-| ------- | --------------- |
-| IP 白名单  | 仅允许指定服务器访问      |
-| SHA-256 | IP 不明文存储        |
-| 多订阅支持   | 使用 `?id=` 切换    |
-| 环境变量隔离  | 不在代码中存储敏感信息     |
-| 内置日志    | 可查看访问记录         |
-| 无状态     | 无需数据库           |
-| 全球加速    | Cloudflare 边缘网络 |
+| 功能         | 说明              |
+| ---------- | --------------- |
+| IP 白名单     | 仅允许指定服务器访问      |
+| SHA-256 加密 | IP 不明文存储        |
+| 多订阅支持      | 使用 `?id=` 切换    |
+| 环境变量隔离     | 不在代码中存储敏感信息     |
+| 内置日志       | 可查看访问记录         |
+| 无状态        | 无需数据库           |
+| 全球加速       | Cloudflare 边缘网络 |
 
 ---
 
@@ -52,7 +54,7 @@ subbridge-worker/
 
 ---
 
-## 🚀 快速开始（推荐）
+## 🚀 快速开始
 
 ### 1️⃣ 部署 Worker
 
@@ -64,23 +66,75 @@ subbridge-worker/
 
 ---
 
-### 2️⃣ 配置 IP 白名单（关键步骤）
+## 🔧 2️⃣ 获取 IP Hash（跨平台方法）
 
-在你的服务器执行：
+为了实现 IP 白名单，需要将你的公网 IP 转换为 SHA-256 hash。
+
+---
+
+### ✅ 方法一：浏览器（推荐 👍）
+
+打开浏览器控制台（F12），执行：
+
+```javascript
+async function hashIP(ip) {
+  const data = new TextEncoder().encode(ip);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+hashIP("你的公网IP").then(console.log);
+```
+
+👉 适用于：
+
+* Windows
+* macOS
+* Linux
+* 手机浏览器（支持 DevTools）
+
+---
+
+### ✅ 方法二：Linux / VPS
 
 ```bash
 echo -n "你的公网IP" | sha256sum
 ```
 
-得到：
+---
 
-```text
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+### ✅ 方法三：Windows PowerShell
+
+```powershell
+[System.BitConverter]::ToString(
+  [System.Security.Cryptography.SHA256]::Create().ComputeHash(
+    [System.Text.Encoding]::UTF8.GetBytes("你的公网IP")
+  )
+).Replace("-", "").ToLower()
 ```
 
 ---
 
+### ✅ 方法四：在线工具（最简单）
+
+搜索：`sha256 在线`
+
+⚠ 注意：
+
+* 不要输入订阅 token
+* IP 输入是安全的
+
+---
+
+## ⚙️ 3️⃣ 配置环境变量
+
 在 Cloudflare → Worker → Settings → Variables 添加：
+
+---
+
+### 🔐 IP 白名单
 
 ```text
 ALLOWED_IPS=hash1,hash2
@@ -94,9 +148,7 @@ ALLOWED_IPS=hash1,hash2
 
 ---
 
-### 3️⃣ 配置订阅
-
-在 Variables 中添加：
+### 📦 订阅配置
 
 ```text
 SUB1=https://your-subscription-1
@@ -112,7 +164,7 @@ SUB100=https://example.com
 
 ---
 
-### 4️⃣ 使用方式
+## 🔗 4️⃣ 使用方式
 
 ```text
 https://your-worker.workers.dev/?id=1
@@ -123,39 +175,9 @@ https://your-worker.workers.dev/?id=2
 
 ## 📦 Sub-Store 使用示例
 
-在 Sub-Store 中添加：
-
 ```text
 https://your-worker.workers.dev/?id=1
 ```
-
-即可正常拉取订阅。
-
----
-
-## 🔐 安全机制
-
-### ✔ IP 白名单
-
-* 使用 SHA-256 存储 IP
-* Worker 运行时进行校验
-* 防止他人访问
-
----
-
-### ✔ 环境变量隔离
-
-* 订阅链接（token）不写入代码
-* 不上传 GitHub
-* 避免泄露
-
----
-
-### ⚠ 安全建议
-
-* 不要分享 Worker URL
-* 定期更换订阅 token
-* 避免在公共环境测试
 
 ---
 
@@ -165,16 +187,7 @@ https://your-worker.workers.dev/?id=1
 
 ---
 
-### 日志内容
-
-* 请求时间
-* 客户端 IP
-* 订阅 ID
-* 请求状态
-
----
-
-### 示例
+### 日志示例
 
 ```text
 [2026-03-24T15:00:00Z] [IP:1.2.3.4] [ID:1] 🚀 Fetching subscription
@@ -193,8 +206,30 @@ https://your-worker.workers.dev/?id=1
 
 ### 注意
 
-* 日志为临时存储（非持久）
+* 日志为临时存储
 * 高流量可能被采样
+
+---
+
+## 🔐 安全机制
+
+### ✔ IP 白名单
+
+限制访问来源，防止订阅被他人使用
+
+---
+
+### ✔ 环境变量隔离
+
+订阅 token 不出现在代码中
+
+---
+
+### ⚠ 安全建议
+
+* 不要公开 Worker 链接
+* 定期更换订阅 token
+* 不要将 `.env` 提交到 GitHub
 
 ---
 
@@ -222,7 +257,7 @@ https://your-worker.workers.dev/?id=1
 
 原因：
 
-* 源站限制访问（如 Cloudflare Challenge）
+* 源站限制访问（如 Cloudflare challenge）
 * 中转接口不可用
 
 建议：
@@ -231,27 +266,19 @@ https://your-worker.workers.dev/?id=1
 
 ---
 
-### ❓ 多 IP 配置
-
-```text
-ALLOWED_IPS=hash1,hash2
-```
-
----
-
 ## 🧩 使用场景
 
-* 多机场订阅统一管理
+* 多机场统一管理
 * 防止订阅泄露
 * Sub-Store 中转
-* 自建订阅分发系统
+* 自建订阅网关
 
 ---
 
 ## 📈 架构示意
 
 ```text
-客户端（Sub-Store / Clash）
+客户端（Clash / Sub-Store）
         ↓
    SubBridge Worker
         ↓
