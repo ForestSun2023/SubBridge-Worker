@@ -1,24 +1,19 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    const key = url.searchParams.get("key");
 
     const ip = request.headers.get("cf-connecting-ip") || "unknown";
     const now = new Date().toISOString();
 
     const log = (msg) => {
-      console.log(`[${now}] [IP:${ip}] [ID:${id}] ${msg}`);
+      console.log(`[${now}] [IP:${ip}] [KEY:${key}] ${msg}`);
     };
 
     // ======== IP 白名单 ========
     const allowedHashes = env.ALLOWED_IPS
       ? env.ALLOWED_IPS.split(",")
       : [];
-
-    if (!ip) {
-      log("❌ No IP");
-      return new Response("Forbidden", { status: 403 });
-    }
 
     const encoder = new TextEncoder();
     const hashBuffer = await crypto.subtle.digest(
@@ -35,16 +30,24 @@ export default {
       return new Response("Forbidden", { status: 403 });
     }
 
-    if (!id) {
-      log("❌ Missing id");
-      return new Response("Missing id", { status: 400 });
+    if (!key) {
+      log("❌ Missing key");
+      return new Response("Missing key", { status: 400 });
     }
 
-    const target = env["SUB" + id];
+    // ======== 订阅映射（JSON）========
+    let map = {};
+    try {
+      map = JSON.parse(env.SUB_MAP || "{}");
+    } catch {
+      return new Response("Config error", { status: 500 });
+    }
+
+    const target = map[key];
 
     if (!target) {
-      log("❌ Subscription not found");
-      return new Response("Subscription not found", { status: 404 });
+      log("❌ Invalid key");
+      return new Response("Invalid key", { status: 403 });
     }
 
     log("🚀 Fetching subscription");
@@ -65,7 +68,7 @@ export default {
       });
 
     } catch (err) {
-      log(`❌ Fetch error: ${err.message}`);
+      log("❌ Fetch error");
       return new Response("Fetch failed", { status: 500 });
     }
   },
