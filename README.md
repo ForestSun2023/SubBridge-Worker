@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
 
-一个基于 Cloudflare Workers 的轻量级订阅中转工具，支持 **Key 鉴权 + IP 白名单 + 多订阅管理**。
+一个基于 Cloudflare Workers 的订阅中转工具，支持 **安全模式（IP + Key）** 与 **分享模式（仅 Key）**。
 
 ---
 
@@ -27,30 +27,39 @@ SubBridge Worker 通过 Cloudflare 边缘网络，将真实订阅进行安全中
 
 ---
 
-## 🔥 核心特性
+## 🧩 两种运行模式
 
-| 功能         | 说明              |
-| ---------- | --------------- |
-| IP 白名单     | 仅允许指定服务器访问      |
-| SHA-256 加密 | IP 不明文存储        |
-| Key 鉴权     | 防止订阅被猜测         |
-| 多订阅支持      | 使用 key 动态映射     |
-| 环境变量隔离     | 不在代码中存储敏感信息     |
-| 内置日志       | 可查看访问记录         |
-| 无状态        | 无数据库            |
-| 全球加速       | Cloudflare 边缘网络 |
+本项目提供两种 Worker 版本：
+
+---
+
+### 🔐 安全版（secure.js）【推荐】
+
+* ✔ IP 白名单 + Key 鉴权
+* ✔ 安全性最高
+* ✔ 推荐自用
+
+---
+
+### 🔗 分享版（share.js）
+
+* ✔ 仅 Key 鉴权
+* ❌ 无 IP 限制
+* ⚠ 适合临时分享，不建议长期公开
 
 ---
 
 ## 🧱 项目结构
 
-```text
+```text id="9zx6we"
 subbridge-worker/
-├── worker.js
+├── workers/
+│   ├── secure.js
+│   └── share.js
 ├── README.md
-├── LICENSE
+├── example.env
 ├── .gitignore
-└── example.env
+└── LICENSE
 ```
 
 ---
@@ -63,21 +72,39 @@ subbridge-worker/
 
 👉 Workers & Pages → Create Worker
 
-将 `worker.js` 内容粘贴并部署。
+---
+
+### 2️⃣ 选择版本
+
+#### 🔐 安全版（推荐）
+
+上传：
+
+```text id="mrk2fq"
+workers/secure.js
+```
 
 ---
 
-## 🔧 2️⃣ 获取 IP Hash（跨平台）
+#### 🔗 分享版
 
-为了启用 IP 白名单，需要将公网 IP 转换为 SHA-256。
+上传：
+
+```text id="z2gqfa"
+workers/share.js
+```
 
 ---
 
-### ✅ 推荐方法（浏览器）
+## 🔧 3️⃣ 获取 IP Hash（仅安全版需要）
 
-打开浏览器控制台（F12）执行：
+---
 
-```javascript
+### ✅ 推荐（浏览器）
+
+打开控制台执行：
+
+```javascript id="tqafrc"
 async function hashIP(ip) {
   const data = new TextEncoder().encode(ip);
   const hash = await crypto.subtle.digest("SHA-256", data);
@@ -90,17 +117,17 @@ hashIP("你的公网IP").then(console.log);
 
 ---
 
-### ✅ Linux / VPS
+### 其他方式
 
-```bash
+#### Linux / VPS
+
+```bash id="k2px9n"
 echo -n "你的公网IP" | sha256sum
 ```
 
----
+#### Windows PowerShell
 
-### ✅ Windows PowerShell
-
-```powershell
+```powershell id="5pz9gx"
 [System.BitConverter]::ToString(
   [System.Security.Cryptography.SHA256]::Create().ComputeHash(
     [System.Text.Encoding]::UTF8.GetBytes("你的公网IP")
@@ -110,54 +137,40 @@ echo -n "你的公网IP" | sha256sum
 
 ---
 
-### ✅ 在线工具
+## ⚙️ 4️⃣ 配置环境变量
 
-搜索：`sha256 在线`
-
-⚠ 注意不要输入敏感 token
+在 Cloudflare → Worker → Settings → Variables 添加：
 
 ---
 
-## ⚙️ 3️⃣ 配置环境变量
+### 🔐 IP 白名单（仅 secure.js 使用）
 
-在 Cloudflare → Worker → Settings → Variables 中添加：
-
----
-
-### 🔐 IP 白名单
-
-```text
+```text id="r6q4j7"
 ALLOWED_IPS=hash1,hash2
 ```
 
 ---
 
-### 🔑 订阅映射（核心）
+### 🔑 订阅映射（两个版本通用）
 
-```text
+```text id="n3v9jq"
 SUB_MAP={"key1":"订阅1","key2":"订阅2"}
 ```
 
-👉 示例：
+---
 
-```text
+### 示例
+
+```text id="3s3d91"
 SUB_MAP={"a8f3k2x":"https://example.com/sub1","9dj2kq1":"https://example.com/sub2"}
 ```
 
 ---
 
-## 🔗 4️⃣ 使用方式
+## 🔗 5️⃣ 使用方式
 
-```text
+```text id="r9z8d2"
 https://your-worker.workers.dev/?key=a8f3k2x
-```
-
----
-
-## 📦 Sub-Store 示例
-
-```text
-https://your-worker.workers.dev/?key=yourkey
 ```
 
 ---
@@ -170,23 +183,16 @@ https://your-worker.workers.dev/?key=yourkey
 
 ### 示例
 
-```text
+```text id="9dfk3a"
 [2026-03-24T15:00:00Z] [IP:1.2.3.4] [KEY:a8f3k2x] 🚀 Fetching subscription
 [2026-03-24T15:00:00Z] [IP:1.2.3.4] [KEY:a8f3k2x] ✅ Success: 200
 ```
 
 ---
 
-### 查看方式
+### 查看日志
 
 Cloudflare → Workers → Logs
-
----
-
-### 注意
-
-* 日志为临时存储
-* 高流量可能被采样
 
 ---
 
@@ -194,7 +200,7 @@ Cloudflare → Workers → Logs
 
 ### ✔ 已实现
 
-* IP 白名单限制
+* IP 白名单（secure.js）
 * Key 鉴权
 * 环境变量隔离
 
@@ -204,7 +210,7 @@ Cloudflare → Workers → Logs
 
 * 不要公开 Worker URL
 * 不要泄露 key
-* 定期更换订阅 token
+* 分享版请定期更换 key
 
 ---
 
@@ -212,21 +218,21 @@ Cloudflare → Workers → Logs
 
 ### ❓ 403 Forbidden
 
-* IP 不在白名单
-* hash 错误
+* IP 不在白名单（安全版）
+* key 错误
 
 ---
 
 ### ❓ Invalid key
 
-* key 不存在
 * SUB_MAP 未配置
+* key 不存在
 
 ---
 
 ### ❓ 订阅拉取失败
 
-* 源站限制访问（如 Cloudflare challenge）
+* 源站限制访问
 * 订阅地址失效
 
 ---
@@ -236,13 +242,13 @@ Cloudflare → Workers → Logs
 * 多订阅统一管理
 * Sub-Store 中转
 * 防止订阅泄露
-* 自建轻量订阅系统
+* 临时分享订阅
 
 ---
 
 ## 📈 架构
 
-```text
+```text id="r8n5m3"
 客户端（Clash / Sub-Store）
         ↓
    SubBridge Worker
